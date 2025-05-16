@@ -10,15 +10,29 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    try {
+    setError('');    try {
       const res = await fetch(`/api/${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Auth failed');
+      
+      // Check if response is ok before trying to parse JSON
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Server response:', text);
+        throw new Error(`Server error: ${res.status} ${res.statusText}`);
+      }
+
+      // Try to parse JSON response
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.error('JSON parse error:', e);
+        throw new Error('Invalid response from server');
+      }
+
       if (mode === 'login') {
         localStorage.setItem('token', data.token);
         onAuth();
@@ -28,7 +42,8 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
         setPassword('');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Auth error:', err);
+      setError(err.message || 'Authentication failed');
     }
     setLoading(false);
   };

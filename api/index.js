@@ -1,2 +1,7 @@
-// Re-export the server.js for Vercel serverless functions
-export { default } from '../server.js';
+import app from '../server.js';
+
+// Handle all HTTP methods
+export default function handler(req, res) {
+  // Forward the request to our Express app
+  return app(req, res);
+}
