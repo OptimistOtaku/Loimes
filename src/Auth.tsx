@@ -12,7 +12,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`http://localhost:4000/api/${mode}`, {
+      const res = await fetch(`/api/${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

@@ -8,18 +8,40 @@ import bcrypt from 'bcryptjs';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const JWT_SECRET = 'your_secret_key_here'; // Change this in production
+const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_here';
 
 // Only allow these usernames to register
-const ALLOWED_USERS = ['adi padi', 'rui pui']; // <-- Set your usernames here
+const ALLOWED_USERS = ['adi padi', 'rui pui'];
 
-// SQLite database setup
+// SQLite database setup for Vercel
 let db;
+async function initDB() {
+  if (!db) {
+    db = await open({
+      filename: '/tmp/envelopes.db',
+      driver: sqlite3.Database
+    });
+    
+    // Create tables if they don't exist
+    await db.run(`CREATE TABLE IF NOT EXISTS envelopes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sender TEXT NOT NULL,
+      content TEXT NOT NULL,
+      createdAt TEXT NOT NULL
+    )`);
+    await db.run(`CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    )`);
+  }
+  return db;
+}
+
+// Initialize DB for the first time
 (async () => {
-  db = await open({
-    filename: './envelopes.db',
-    driver: sqlite3.Database
-  });
+  await initDB();
+})();
   await db.run(`CREATE TABLE IF NOT EXISTS envelopes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sender TEXT NOT NULL,

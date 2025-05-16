@@ -16,7 +16,7 @@ export default function Home() {
     setSuccess(false);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:4000/api/envelopes', {
+      const res = await fetch('/api/envelopes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -8,8 +8,7 @@ export default function ViewMessages() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    fetch('http://localhost:4000/api/envelopes', {
+    const token = localStorage.getItem('token');    fetch('/api/envelopes', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
