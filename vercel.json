@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "builds": [
     { 
-      "src": "api/**/*.js",
+      "src": "api/*.js",
       "use": "@vercel/node"
     },
     { 
@@ -17,8 +17,16 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
+      "src": "/api/register",
+      "dest": "/api/auth"
+    },
+    {
+      "src": "/api/login",
+      "dest": "/api/auth"
+    },
+    {
+      "src": "/api/envelopes",
+      "dest": "/api/envelopes"
     },
     {
       "src": "^/assets/(.*)",
