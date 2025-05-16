@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "start": "node server.js",
     "serve": "vite preview",
-    "vercel-build": "vite build"
+    "vercel-build": "tsc -b && vite build"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
