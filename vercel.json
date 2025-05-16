@@ -1,0 +1,30 @@
+# Vercel configuration for monorepo (frontend + backend)
+
+{
+  "version": 2,
+  "builds": [
+    { "src": "server.js", "use": "@vercel/node" },
+    { "src": "src/main.tsx", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/server.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "JWT_SECRET": "your_secret_key_here"
+  }
+}
+
+# Build frontend (React/Vite)
+[build]
+command = "npm run build"
+publish = "dist"
+
+# Set up API routes for Express backend
+[functions]
+api/*.js = { runtime = "nodejs18.x" }
+
+# Ignore node_modules in output
+[ignore]
+files = ["node_modules"]

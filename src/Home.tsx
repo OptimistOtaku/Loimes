@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import EnvelopeIcon from './assets/icons/envelope.svg';
+import Bird from './assets/icons/bird.svg';
 
 export default function Home() {
   const [sender, setSender] = useState('');
@@ -33,7 +34,11 @@ export default function Home() {
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ position: 'relative', overflow: 'visible' }}>
+      {/* Decorative SVG Bird left */}
+      <img src={Bird} alt="Bird" style={{ position: 'absolute', left: -60, top: '50%', width: 60, opacity: 0.8, zIndex: 0, transform: 'translateY(-50%)' }} />
+      {/* Decorative SVG Bird right (mirrored) */}
+      <img src={Bird} alt="Bird" style={{ position: 'absolute', right: -60, top: '50%', width: 60, opacity: 0.8, zIndex: 0, transform: 'scaleX(-1) translateY(-50%)' }} />
       <h1>Welcome to Envelope Message Board</h1>
       <form onSubmit={handleSubmit} style={{ marginBottom: 24, display: 'flex', flexDirection: 'row', gap: 40, alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: 700 }}>
         <input
