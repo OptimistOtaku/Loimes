@@ -4,11 +4,8 @@
   "outputDirectory": "dist",
   "builds": [
     { 
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["envelopes.db"]
-      }
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     },
     { 
       "src": "package.json", 
