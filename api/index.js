@@ -34,8 +34,25 @@ async function getDB() {
 }
 
 const handler = express();
-handler.use(cors());
+
+// Enhanced CORS configuration
+handler.use(cors({
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 handler.use(bodyParser.json());
+
+// Handle preflight requests
+handler.options('*', cors());
+
+// Base path middleware to remove /api prefix
+handler.use((req, res, next) => {
+  req.url = req.url.replace(/^\/api/, '');
+  next();
+});
 
 // Auth middleware
 function authenticateToken(req, res, next) {
@@ -50,7 +67,7 @@ function authenticateToken(req, res, next) {
 }
 
 // Register endpoint
-handler.post('/api/register', async (req, res) => {
+handler.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
@@ -67,7 +84,7 @@ handler.post('/api/register', async (req, res) => {
 });
 
 // Login endpoint
-handler.post('/api/login', async (req, res) => {
+handler.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     const db = await getDB();
@@ -86,7 +103,7 @@ handler.post('/api/login', async (req, res) => {
 });
 
 // Get envelopes endpoint
-handler.get('/api/envelopes', authenticateToken, async (req, res) => {
+handler.get('/envelopes', authenticateToken, async (req, res) => {
   try {
     const db = await getDB();
     const envelopes = await db.all('SELECT * FROM envelopes ORDER BY id DESC');
@@ -98,7 +115,7 @@ handler.get('/api/envelopes', authenticateToken, async (req, res) => {
 });
 
 // Add envelope endpoint
-handler.post('/api/envelopes', authenticateToken, async (req, res) => {
+handler.post('/envelopes', authenticateToken, async (req, res) => {
   try {
     const { sender, content } = req.body;
     if (!sender || !content) {
