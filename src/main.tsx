@@ -2,6 +2,7 @@ import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import './index.css';
+import './App.css';
 import Home from './Home';
 import ViewMessages from './ViewMessages';
 import Auth from './Auth';
