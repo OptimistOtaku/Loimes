@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_here';
+const JWT_SECRET = process.env.JWT_SECRET || 'HvbDVufXpUIr9/zES1p+dt7xrlsyVliIhFB4B1FDwcM=';
 const ALLOWED_USERS = ['adi padi', 'rui pui'];
 
 // SQLite database setup
