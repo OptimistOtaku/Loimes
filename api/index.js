@@ -7,6 +7,13 @@ const ALLOWED_USERS = ['adi padi', 'rui pui'];
 
 const handler = async (req, res) => {
   try {
+    console.log('API Request:', {
+      method: req.method,
+      path: req.url,
+      headers: req.headers,
+      timestamp: new Date().toISOString()
+    });
+
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -19,9 +26,14 @@ const handler = async (req, res) => {
       return;
     }
 
+    // Verify environment variables
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI is not configured');
+    }
+
     // Connect to database
-    await connectToDatabase();
-    const { User, Envelope } = models;
+    const { db } = await connectToDatabase();
+    console.log('Database connected successfully');
     
     // Parse the path - remove /api/ prefix if present
     const path = req.url.replace(/^\/api\//, '');
@@ -47,7 +59,7 @@ const handler = async (req, res) => {
             resolve(parsed);
           } catch (e) {
             console.error('JSON parse error:', e);
-            reject(new Error('Invalid JSON'));
+            reject(new Error('Invalid JSON: ' + e.message));
           }
         });
         req.on('error', (e) => {
@@ -163,10 +175,18 @@ const handler = async (req, res) => {
     res.status(404).json({ error: 'Not found' });
 
   } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ 
-      error: 'Server error', 
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    console.error('Server error:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV
+    });
+
+    // Send appropriate error response
+    res.status(500).json({
+      error: 'Server error',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      code: error.code || 'INTERNAL_ERROR'
     });
   }
 };
