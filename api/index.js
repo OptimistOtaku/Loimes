@@ -1,19 +1,38 @@
-import { connectToDatabase, models } from './db.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'HvbDVufXpUIr9/zES1p+dt7xrlsyVliIhFB4B1FDwcM=';
 const ALLOWED_USERS = ['adi padi', 'rui pui'];
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://YOUR_MONGODB_URI';
+
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    return cachedDb;
+  }
+
+  try {
+    const client = await MongoClient.connect(MONGODB_URI, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      }
+    });
+
+    const db = client.db('loimes');
+    cachedDb = db;
+    return db;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw new Error('Failed to connect to database');
+  }
+}
 
 const handler = async (req, res) => {
   try {
-    console.log('API Request:', {
-      method: req.method,
-      path: req.url,
-      headers: req.headers,
-      timestamp: new Date().toISOString()
-    });
-
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -26,14 +45,8 @@ const handler = async (req, res) => {
       return;
     }
 
-    // Verify environment variables
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI is not configured');
-    }
-
-    // Connect to database
-    const { db } = await connectToDatabase();
-    console.log('Database connected successfully');
+    // Get database connection
+    const db = await connectToDatabase();
     
     // Parse the path - remove /api/ prefix if present
     const path = req.url.replace(/^\/api\//, '');
@@ -83,14 +96,16 @@ const handler = async (req, res) => {
         return;
       }
 
-      const existingUser = await User.findOne({ username });
+      const users = db.collection('users');
+      const existingUser = await users.findOne({ username });
+      
       if (existingUser) {
         res.status(400).json({ error: 'Username already exists' });
         return;
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      await User.create({ username, password: hashedPassword });
+      await users.insertOne({ username, password: hashedPassword });
       
       res.status(201).json({ message: 'User registered successfully' });
       return;
@@ -104,7 +119,9 @@ const handler = async (req, res) => {
         return;
       }
 
-      const user = await User.findOne({ username });
+      const users = db.collection('users');
+      const user = await users.findOne({ username });
+      
       if (!user) {
         res.status(400).json({ error: 'Invalid credentials' });
         return;
@@ -116,12 +133,7 @@ const handler = async (req, res) => {
         return;
       }
 
-      const token = jwt.sign(
-        { username: user.username, id: user._id.toString() },
-        JWT_SECRET,
-        { expiresIn: '1d' }
-      );
-      
+      const token = jwt.sign({ username: user.username, id: user._id.toString() }, JWT_SECRET, { expiresIn: '1d' });
       res.status(200).json({ token });
       return;
     }
@@ -137,13 +149,10 @@ const handler = async (req, res) => {
 
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        
+        const envelopes = db.collection('envelopes');
+
         if (req.method === 'GET') {
-          const messages = await Envelope.find()
-            .sort({ createdAt: -1 })
-            .lean()
-            .exec();
-          
+          const messages = await envelopes.find({}).sort({ createdAt: -1 }).toArray();
           res.status(200).json(messages);
           return;
         }
@@ -155,13 +164,18 @@ const handler = async (req, res) => {
             return;
           }
 
-          const envelope = await Envelope.create({
+          const newEnvelope = {
             sender,
             content,
-            createdAt: new Date()
-          });
+            createdAt: new Date().toISOString()
+          };
 
-          res.status(201).json(envelope.toObject());
+          const result = await envelopes.insertOne(newEnvelope);
+          
+          res.status(201).json({
+            id: result.insertedId.toString(),
+            ...newEnvelope
+          });
           return;
         }
       } catch (e) {
@@ -175,20 +189,12 @@ const handler = async (req, res) => {
     res.status(404).json({ error: 'Not found' });
 
   } catch (error) {
-    console.error('Server error:', {
-      message: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV
-    });
-
-    // Send appropriate error response
-    res.status(500).json({
-      error: 'Server error',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      code: error.code || 'INTERNAL_ERROR'
+    console.error('Server error:', error);
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
     });
   }
 };
 
-export default handler;
+module.exports = handler;
