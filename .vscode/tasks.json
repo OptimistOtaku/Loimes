@@ -1,0 +1,14 @@
+{
+  // See https://code.visualstudio.com/docs/editor/tasks for more details
+  "version": "2.0.0",
+  "tasks": [
+    {
+        "label": "Start Backend Server",
+        "type": "shell",
+        "command": "node server.js",
+        "group": "build",
+        "isBackground": true,
+        "problemMatcher": []
+    }
+]
+}

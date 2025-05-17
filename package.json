@@ -10,14 +10,18 @@
     "preview": "vite preview",
     "start": "node server.js",
     "serve": "vite preview",
-    "vercel-build": "tsc -b && vite build"
+    "vercel-build": "tsc -b && vite build",
+    "test:db": "node scripts/test-db.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^5.9.1",
+    "mongoose": "^8.15.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.0",
