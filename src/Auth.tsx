@@ -10,42 +10,47 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');    try {
+    setError('');
+    
+    try {
       const res = await fetch(`/api/${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
       
-      // Check if response is ok before trying to parse JSON
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server response:', text);
-        throw new Error(`Server error: ${res.status} ${res.statusText}`);
+      let data;
+      const text = await res.text();
+      
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Response parse error:', e);
+        throw new Error(`Invalid response: ${text}`);
       }
 
-      // Try to parse JSON response
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        console.error('JSON parse error:', e);
-        throw new Error('Invalid response from server');
+      if (!res.ok) {
+        throw new Error(data.error || `${res.status} ${res.statusText}`);
       }
 
       if (mode === 'login') {
+        if (!data.token) {
+          throw new Error('No token received');
+        }
         localStorage.setItem('token', data.token);
         onAuth();
       } else {
         setMode('login');
         setUsername('');
         setPassword('');
+        setError('Registration successful! Please login.');
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      setError(err.message || 'Authentication failed');
+      setError(err.message || 'Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -57,6 +62,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
           value={username}
           onChange={e => setUsername(e.target.value)}
           required
+          disabled={loading}
         />
         <input
           placeholder="Password"
@@ -64,12 +70,13 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
+          disabled={loading}
         />
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} className="custom-bg">
           {loading ? (mode === 'login' ? 'Logging in...' : 'Registering...') : (mode === 'login' ? 'Login' : 'Register')}
         </button>
       </form>
-      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+      {error && <div style={{ color: error.includes('successful') ? 'green' : 'red', marginBottom: 8 }}>{error}</div>}
       <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{ background: 'none', color: '#646cff', border: 'none', cursor: 'pointer' }}>
         {mode === 'login' ? 'Need an account? Register' : 'Already have an account? Login'}
       </button>

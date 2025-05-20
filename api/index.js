@@ -1,12 +1,15 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { MongoClient, ServerApiVersion } from 'mongodb';
+import 'dotenv/config';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'HvbDVufXpUIr9/zES1p+dt7xrlsyVliIhFB4B1FDwcM=';
 const ALLOWED_USERS = ['adi padi', 'rui pui'];
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://YOUR_MONGODB_URI';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/loimes';
 
 let cachedDb = null;
+let connectionAttempts = 0;
+const MAX_RETRIES = 3;
 
 async function connectToDatabase() {
   if (cachedDb) {
@@ -14,20 +17,40 @@ async function connectToDatabase() {
   }
 
   try {
+    console.log('Attempting to connect to MongoDB...');
+    connectionAttempts++;
+
     const client = await MongoClient.connect(MONGODB_URI, {
       serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true,
-      }
+      },
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     });
 
-    const db = client.db('loimes');
+    console.log('Successfully connected to MongoDB');
+    
+    const db = client.db();
+    
+    // Verify connection
+    await db.command({ ping: 1 });
+    console.log('Database ping successful');
+    
     cachedDb = db;
     return db;
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    throw new Error('Failed to connect to database');
+    console.error('Connection URI:', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//<credentials>@'));
+    
+    if (connectionAttempts < MAX_RETRIES) {
+      console.log(`Retrying connection (attempt ${connectionAttempts + 1}/${MAX_RETRIES})...`);
+      return connectToDatabase();
+    }
+    
+    throw new Error(`Failed to connect to database after ${MAX_RETRIES} attempts: ${error.message}`);
   }
 }
 
@@ -58,17 +81,14 @@ const handler = async (req, res) => {
         let data = '';
         req.on('data', chunk => {
           data += chunk;
-          console.log('Received chunk:', chunk.length, 'bytes');
         });
         req.on('end', () => {
-          console.log('Raw request body:', data);
           if (!data) {
             reject(new Error('Empty request body'));
             return;
           }
           try {
             const parsed = JSON.parse(data);
-            console.log('Parsed body:', parsed);
             resolve(parsed);
           } catch (e) {
             console.error('JSON parse error:', e);
@@ -152,7 +172,7 @@ const handler = async (req, res) => {
         const envelopes = db.collection('envelopes');
 
         if (req.method === 'GET') {
-          const messages = await envelopes.find({}).sort({ createdAt: -1 }).toArray();
+          const messages = await envelopes.find().sort({ createdAt: -1 }).toArray();
           res.status(200).json(messages);
           return;
         }
@@ -197,4 +217,4 @@ const handler = async (req, res) => {
   }
 };
 
-module.exports = handler;
+export default handler;
