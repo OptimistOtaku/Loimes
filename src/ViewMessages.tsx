@@ -3,6 +3,8 @@ import Hrad from './assets/icons/hrad.svg';
 import Hrui from './assets/icons/hrui.svg';
 import Bird from './assets/icons/bird.svg';
 
+const API_URL = 'https://loimis.vercel.app/api';
+
 export default function ViewMessages() {
   const [envelopes, setEnvelopes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,10 +18,7 @@ export default function ViewMessages() {
       return;
     }
 
-    // Use the Vercel deployment URL
-    const apiUrl = 'https://loimis.vercel.app/api/envelopes';
-
-    fetch(apiUrl, {
+    fetch(`${API_URL}/envelopes`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

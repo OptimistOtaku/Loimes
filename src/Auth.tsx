@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const API_URL = 'https://loimis.vercel.app/api';
+
 export default function Auth({ onAuth }: { onAuth: () => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
@@ -13,7 +15,7 @@ export default function Auth({ onAuth }: { onAuth: () => void }) {
     setError('');
     
     try {
-      const res = await fetch(`/api/${mode}`, {
+      const res = await fetch(`${API_URL}/${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

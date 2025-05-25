@@ -2,6 +2,8 @@ import { useState } from 'react';
 import EnvelopeIcon from './assets/icons/envelope.svg';
 import Bird from './assets/icons/bird.svg';
 
+const API_URL = 'https://loimis.vercel.app/api';
+
 export default function Home() {
   const [sender, setSender] = useState('');
   const [content, setContent] = useState('');
@@ -16,7 +18,10 @@ export default function Home() {
     setSuccess(false);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/envelopes', {
+      if (!token) {
+        throw new Error('Not authenticated. Please login first.');
+      }
+      const res = await fetch(`${API_URL}/envelopes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,11 +29,14 @@ export default function Home() {
         },
         body: JSON.stringify({ sender, content })
       });
-      if (!res.ok) throw new Error('Failed to send message');
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send message');
+      }
       setSuccess(true);
       setContent('');
-    } catch (err) {
-      setError('Could not send message.');
+    } catch (err: any) {
+      setError(err.message || 'Could not send message.');
     }
     setLoading(false);
   };
