@@ -1,6 +1,6 @@
 ---
 
-# 💌 Loimes: Envelope Message Board for Partners
+ # 💌 Loimes: Envelope Message Board for Partners
 
 **Loimes** is a heartfelt and interactive web app for two partners to leave and view messages in the form of **adorable envelope-style folders**. It's your private corner on the internet to store meaningful notes, memories, and love letters — all backed by a database so nothing ever gets lost.
 
